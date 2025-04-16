@@ -13,7 +13,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4  # Обновлено до v4
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
@@ -29,20 +29,19 @@ jobs:
     - name: Generate coverage report
       if: always()
       run: |
-        # Install reportgenerator if not already installed
         dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.10
         reportgenerator -reports:./**/coverage.cobertura.xml -targetdir:./CoverageReport -reporttypes:HtmlInline_AzurePipelines
         
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # Обновлено до v4
       with:
         name: TestResults
         path: TestResults
         
     - name: Upload coverage report
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # Обновлено до v4
       with:
         name: CoverageReport
         path: CoverageReport
