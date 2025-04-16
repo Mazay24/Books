@@ -1,0 +1,57 @@
+name: Run Tests and Coverage
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test and Coverage
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'
+        
+    - name: Install dependencies
+      run: dotnet restore
+      
+    - name: Run tests
+      run: dotnet test --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults
+      
+    - name: Generate coverage report
+      if: always()
+      run: |
+        # Install reportgenerator if not already installed
+        dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.10
+        reportgenerator -reports:./**/coverage.cobertura.xml -targetdir:./CoverageReport -reporttypes:HtmlInline_AzurePipelines
+        
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: TestResults
+        path: TestResults
+        
+    - name: Upload coverage report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: CoverageReport
+        path: CoverageReport
+        
+    - name: Notify Slack on failure
+      if: failure()
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_COLOR: danger
+        SLACK_TITLE: "Tests Failed in ${{ github.repository }}"
+        SLACK_MESSAGE: "Tests failed in commit ${{ github.sha }}. See details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
